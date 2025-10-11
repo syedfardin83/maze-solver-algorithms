@@ -26,6 +26,7 @@ public:
     Cell cells[16][16];
     int x = 0;
     int y = 0;
+    
     char orientation = 'N';
 
     //  Constructor function
