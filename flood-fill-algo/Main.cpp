@@ -394,9 +394,8 @@ public:
                 }
                 // If all paths visited, go back to previous intersection.
                 else{
-                    while(!cells[front_cell[0]][front_cell[1]].visited || !cells[left_cell[0]][left_cell[1]].visited || !cells[right_cell[0]][right_cell[1]].visited){
-                        
-                    }
+                    // Compute shortest route back to previous intersection:
+                    
                 }
             }
         }
