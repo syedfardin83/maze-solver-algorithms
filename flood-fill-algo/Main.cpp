@@ -11,13 +11,13 @@ void log(const std::string &text)
 class Cell
 {
 public:
-    bool wallLeft;
-    bool wallRight;
-    bool wallFront;
-    bool wallBack;
-    bool visited;
+    bool wallLeft = false;
+    bool wallRight = false;
+    bool wallFront = false;
+    bool wallBack = false;
+    bool visited = false;
 
-    int cost;
+    int cost = 0;
 };
 
 class Maze
@@ -29,32 +29,36 @@ public:
     int left_cell[2];
     int right_cell[2];
     int back_cell[2];
+    char route[200]; int p = 0;
 
     char orientation = 'N';
 
     //  Constructor function
     Maze()
     {
+        // initialize adjacent cells for the starting orientation/position
         cells[curr_cell[0]][curr_cell[1]].visited = true;
+        update_adjacent_cells();
     }
 
     void update_walls_at_cell()
     {
         if (orientation == 'N')
         {
+            // multiple sensors can report walls; check each independently
             if (API::wallLeft())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
             }
-            else if (API::wallRight())
+            if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
             }
-            else if (API::wallFront())
+            if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
             }
-            else if (API::wallBack())
+            if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
             }
@@ -65,15 +69,15 @@ public:
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
             }
-            else if (API::wallRight())
+            if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
             }
-            else if (API::wallFront())
+            if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
             }
-            else if (API::wallBack())
+            if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
             }
@@ -84,15 +88,15 @@ public:
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
             }
-            else if (API::wallRight())
+            if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
             }
-            else if (API::wallFront())
+            if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
             }
-            else if (API::wallBack())
+            if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
             }
@@ -103,15 +107,15 @@ public:
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
             }
-            else if (API::wallRight())
+            if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
             }
-            else if (API::wallFront())
+            if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
             }
-            else if (API::wallBack())
+            if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
             }
@@ -189,8 +193,9 @@ public:
     void turn_left()
     {
         API::turnLeft();
-        update_adjacent_cells();
-        // Change orientation
+        route[p] = 'L';
+        p++;
+        // Change orientation first, then update adjacent cells
         if (orientation == 'N')
         {
             orientation = 'W';
@@ -211,14 +216,16 @@ public:
         {
             log("Error turning left!");
         }
+
+        update_adjacent_cells();
     }
 
     void turn_right()
     {
         API::turnRight();
-        update_adjacent_cells();
-
-        // Change orientation
+        route[p] = 'R';
+        p++;
+        // Change orientation first, then update adjacent cells
         if (orientation == 'N')
         {
             orientation = 'E';
@@ -234,20 +241,21 @@ public:
         else if (orientation == 'W')
         {
             orientation = 'N';
-            // log("W to N");
         }
         else
         {
             log("Error turning right!");
         }
+
+        update_adjacent_cells();
     }
 
     void move_forward()
     {
         API::moveForward();
-        update_adjacent_cells();
-
-        // Change virtual position
+        route[p] = 'F';
+        p++;
+        // Change virtual position first, then update adjacent cells
         if (orientation == 'N')
         {
             curr_cell[1] = curr_cell[1] + 1;
@@ -268,6 +276,8 @@ public:
         {
             log("Error changing position");
         }
+
+        update_adjacent_cells();
     }
 
     void log_coords()
@@ -287,6 +297,9 @@ public:
         API::setText(0, 0, "abc");
         while (true)
         {
+            // ensure adjacent-cell indices are current
+            update_adjacent_cells();
+
             cells[curr_cell[0]][curr_cell[1]].visited = true;
             API::setColor(curr_cell[0], curr_cell[1], 'G');
             // Updating walls
@@ -316,12 +329,14 @@ public:
     {
         while (true)
         {
+            // ensure adjacent-cell indices are current
+            update_adjacent_cells();
 
             cells[curr_cell[0]][curr_cell[1]].visited = true;
             API::setColor(curr_cell[0], curr_cell[1], 'G');
 
             //  Keep moving forward till multiple paths are possible:
-            if (!API::wallFront())
+            if (!API::wallFront() && API::wallLeft() && API::wallRight())
             {
                 move_forward();
             }
@@ -338,28 +353,50 @@ public:
             //  Executes only when an intersection found
             else
             {
+                // log("Intersection found!");
                 //  If multiple paths found, take first one.
-                if (!API::wallLeft())
+                if (!API::wallFront() && !cells[front_cell[0]][front_cell[1]].visited)
                 {
-                    if (!cells[left_cell[0]][left_cell[1]].visited)
+                    // if (!cells[right_cell[0]][right_cell[1]].visited)
+                    // {
+                    //     turn_right();
+                    //     // DFS_explore();
+                    // }
+                    log("Front is:");
+                    log("(" + std::to_string(front_cell[0]) + ", " + std::to_string(front_cell[1]) + ")");
+
+                    move_forward();
+                }
+                else if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
+                {
+                    if (true)
                     {
                         turn_left();
+                        // log("here");
+                        // move_forward();
                         // DFS_explore();
                     }
                 }
-                else if (!API::wallRight())
+                else if (!API::wallRight() && !cells[right_cell[0]][right_cell[1]].visited)
                 {
-                    if (!cells[right_cell[0]][right_cell[1]].visited)
+                    if (true)
                     {
                         turn_right();
                         // DFS_explore();
                     }
                 }
+
                 // Dead end case:
                 else if (API::wallFront() && API::wallLeft() && API::wallRight())
                 {
                     turn_left();
                     turn_left();
+                }
+                // If all paths visited, go back to previous intersection.
+                else{
+                    while(!cells[front_cell[0]][front_cell[1]].visited || !cells[left_cell[0]][left_cell[1]].visited || !cells[right_cell[0]][right_cell[1]].visited){
+                        
+                    }
                 }
             }
         }
