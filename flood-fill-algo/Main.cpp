@@ -17,6 +17,9 @@ public:
     bool wallBack = false;
     bool visited = false;
 
+    bool bfs_visited = false;
+    int bfs_parent[2];
+
     int cost = 0;
 };
 
@@ -29,7 +32,8 @@ public:
     int left_cell[2];
     int right_cell[2];
     int back_cell[2];
-    char route[200]; int p = 0;
+    char route[200];
+    int p = 0;
 
     char orientation = 'N';
 
@@ -393,9 +397,77 @@ public:
                     turn_left();
                 }
                 // If all paths visited, go back to previous intersection.
-                else{
-                    // Compute shortest route back to previous intersection:
-                    
+                else
+                {
+                    // Compute shortest route back to previous intersection using BFS:
+                    int coords_visited[256];
+                    int len1 = 0;
+                    int queue[2][5];
+                    int qLen = 0;
+
+                    int u[2];
+
+                    queue[qLen][0] = curr_cell[0];
+                    queue[qLen][1] = curr_cell[1];
+                    qLen++;
+
+                    cells[queue[qLen - 1][0]][queue[qLen - 1][1]].bfs_visited = true;
+                    while (qLen > 0)
+                    {
+                        u[0] = queue[qLen - 1][0];
+                        u[1] = queue[qLen - 1][1];
+
+                        qLen--;
+
+                        int front[2] = {u[0], u[1] + 1};
+                        int back[2] = {u[0], u[1] - 1};
+                        int left[2] = {u[0] - 1, u[1]};
+                        int right[2] = {u[0] + 1, u[1]};
+
+                        if (!cells[front[0]][front[1]].bfs_visited)
+                        {
+                            queue[qLen][0] = front[0];
+                            queue[qLen][1] = front[1];
+                            qLen++;
+
+                            cells[front[0]][front[1]].bfs_visited = true;
+                            cells[front[0]][front[1]].bfs_parent[0] = u[0];
+                            cells[front[0]][front[1]].bfs_parent[1] = u[1];
+                        }
+                        if (!cells[back[0]][back[1]].bfs_visited)
+                        {
+                            queue[qLen][0] = back[0];
+                            queue[qLen][1] = back[1];
+                            qLen++;
+
+                            cells[back[0]][back[1]].bfs_visited = true;
+                            cells[back[0]][back[1]].bfs_parent[0] = u[0];
+                            cells[back[0]][back[1]].bfs_parent[1] = u[1];
+                        }
+                        if (!cells[right[0]][right[1]].bfs_visited)
+                        {
+                            queue[qLen][0] = right[0];
+                            queue[qLen][1] = right[1];
+                            qLen++;
+
+                            cells[right[0]][right[1]].bfs_visited = true;
+                            cells[right[0]][right[1]].bfs_parent[0] = u[0];
+                            cells[right[0]][right[1]].bfs_parent[1] = u[1];
+                        }
+                        if (!cells[left[0]][left[1]].bfs_visited)
+                        {
+                            queue[qLen][0] = left[0];
+                            queue[qLen][1] = left[1];
+                            qLen++;
+
+                            cells[left[0]][left[1]].bfs_visited = true;
+                            cells[left[0]][left[1]].bfs_parent[0] = u[0];
+                            cells[left[0]][left[1]].bfs_parent[1] = u[1];
+                        }
+                        //  Add break when the target cell is found.
+                        
+
+                    }
                 }
             }
         }
