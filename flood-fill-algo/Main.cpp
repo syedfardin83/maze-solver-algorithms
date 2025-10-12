@@ -37,12 +37,22 @@ public:
 
     char orientation = 'N';
 
+    int intersection_stack[15][2];
+    int ISLen = 0;
+
     //  Constructor function
     Maze()
     {
         // initialize adjacent cells for the starting orientation/position
         cells[curr_cell[0]][curr_cell[1]].visited = true;
         update_adjacent_cells();
+
+        //  Name cells:
+        for (int i = 0; i < 16; i++)
+        {
+            API::setText(0, i, std::to_string(i));
+            API::setText(i, 0, std::to_string(i));
+        }
     }
 
     void update_walls_at_cell()
@@ -357,7 +367,14 @@ public:
             //  Executes only when an intersection found
             else
             {
-                // log("Intersection found!");
+                if (!(API::wallFront() && API::wallLeft() && API::wallRight()))
+                {
+                    log("Intersection found at");
+                    log_coords();
+                    intersection_stack[ISLen][0] = curr_cell[0];
+                    intersection_stack[ISLen][1] = curr_cell[1];
+                    ISLen++;
+                }
                 //  If multiple paths found, take first one.
                 if (!API::wallFront() && !cells[front_cell[0]][front_cell[1]].visited)
                 {
@@ -366,8 +383,8 @@ public:
                     //     turn_right();
                     //     // DFS_explore();
                     // }
-                    log("Front is:");
-                    log("(" + std::to_string(front_cell[0]) + ", " + std::to_string(front_cell[1]) + ")");
+                    // log("Front is:");
+                    // log("(" + std::to_string(front_cell[0]) + ", " + std::to_string(front_cell[1]) + ")");
 
                     move_forward();
                 }
@@ -400,9 +417,13 @@ public:
                 else
                 {
                     // Compute shortest route back to previous intersection using BFS:
+                    log("Starting BFS");
+
+                    ISLen--;
+
                     int coords_visited[256];
                     int len1 = 0;
-                    int queue[2][5];
+                    int queue[5][2];
                     int qLen = 0;
 
                     int u[2];
@@ -416,56 +437,76 @@ public:
                     {
                         u[0] = queue[qLen - 1][0];
                         u[1] = queue[qLen - 1][1];
-
                         qLen--;
 
-                        int front[2] = {u[0], u[1] + 1};
-                        int back[2] = {u[0], u[1] - 1};
-                        int left[2] = {u[0] - 1, u[1]};
-                        int right[2] = {u[0] + 1, u[1]};
-
-                        if (!cells[front[0]][front[1]].bfs_visited)
-                        {
-                            queue[qLen][0] = front[0];
-                            queue[qLen][1] = front[1];
-                            qLen++;
-
-                            cells[front[0]][front[1]].bfs_visited = true;
-                            cells[front[0]][front[1]].bfs_parent[0] = u[0];
-                            cells[front[0]][front[1]].bfs_parent[1] = u[1];
-                        }
-                        if (!cells[back[0]][back[1]].bfs_visited)
-                        {
-                            queue[qLen][0] = back[0];
-                            queue[qLen][1] = back[1];
-                            qLen++;
-
-                            cells[back[0]][back[1]].bfs_visited = true;
-                            cells[back[0]][back[1]].bfs_parent[0] = u[0];
-                            cells[back[0]][back[1]].bfs_parent[1] = u[1];
-                        }
-                        if (!cells[right[0]][right[1]].bfs_visited)
-                        {
-                            queue[qLen][0] = right[0];
-                            queue[qLen][1] = right[1];
-                            qLen++;
-
-                            cells[right[0]][right[1]].bfs_visited = true;
-                            cells[right[0]][right[1]].bfs_parent[0] = u[0];
-                            cells[right[0]][right[1]].bfs_parent[1] = u[1];
-                        }
-                        if (!cells[left[0]][left[1]].bfs_visited)
-                        {
-                            queue[qLen][0] = left[0];
-                            queue[qLen][1] = left[1];
-                            qLen++;
-
-                            cells[left[0]][left[1]].bfs_visited = true;
-                            cells[left[0]][left[1]].bfs_parent[0] = u[0];
-                            cells[left[0]][left[1]].bfs_parent[1] = u[1];
-                        }
                         //  Add break when the target cell is found.
+                        if (u[0] == intersection_stack[ISLen][0] && u[1] == intersection_stack[ISLen][1])
+                        {
+                            log("Intersection location found!");
+                            log("(" + std::to_string(u[0]) + ", " + std::to_string(u[1]) + ")");
+                            log("Retraced path is:");
+                            log("(" + std::to_string(cells[u[0]][u[1]].bfs_parent[0]) + ", " + std::to_string(cells[u[0]][u[1]].bfs_parent[1]) + ")");
+
+                            // int now[2] = {u[0], u[1]};
+                            // while (now[0] == curr_cell[0] && now[1] == curr_cell[1])
+                            // {
+                            //     log("(" + std::to_string(cells[now[0]][now[1]].bfs_parent[0]) + ", " + std::to_string(cells[now[0]][now[1]].bfs_parent[1]) + ")");
+                            //     now[0] = cells[now[0]][now[1]].bfs_parent[0];
+                            //     now[1] = cells[now[0]][now[1]].bfs_parent[1];
+                            // }
+                            // break;
+                        }
+
+                        int neighbours[4][2];
+
                         
+
+                        // int front[2] = {u[0], u[1] + 1};
+                        // int back[2] = {u[0], u[1] - 1};
+                        // int left[2] = {u[0] - 1, u[1]};
+                        // int right[2] = {u[0] + 1, u[1]};
+
+                        // if (!cells[front[0]][front[1]].bfs_visited)
+                        // {
+                        //     queue[qLen][0] = front[0];
+                        //     queue[qLen][1] = front[1];
+                        //     qLen++;
+
+                        //     cells[front[0]][front[1]].bfs_visited = true;
+                        //     cells[front[0]][front[1]].bfs_parent[0] = u[0];
+                        //     cells[front[0]][front[1]].bfs_parent[1] = u[1];
+                        // }
+                        // if (!cells[back[0]][back[1]].bfs_visited)
+                        // {
+                        //     queue[qLen][0] = back[0];
+                        //     queue[qLen][1] = back[1];
+                        //     qLen++;
+
+                        //     cells[back[0]][back[1]].bfs_visited = true;
+                        //     cells[back[0]][back[1]].bfs_parent[0] = u[0];
+                        //     cells[back[0]][back[1]].bfs_parent[1] = u[1];
+                        // }
+                        // if (!cells[right[0]][right[1]].bfs_visited)
+                        // {
+                        //     queue[qLen][0] = right[0];
+                        //     queue[qLen][1] = right[1];
+                        //     qLen++;
+
+                        //     cells[right[0]][right[1]].bfs_visited = true;
+                        //     cells[right[0]][right[1]].bfs_parent[0] = u[0];
+                        //     cells[right[0]][right[1]].bfs_parent[1] = u[1];
+                        // }
+                        // if (!cells[left[0]][left[1]].bfs_visited)
+                        // {
+                        //     queue[qLen][0] = left[0];
+                        //     queue[qLen][1] = left[1];
+                        //     qLen++;
+
+                        //     cells[left[0]][left[1]].bfs_visited = true;
+                        //     cells[left[0]][left[1]].bfs_parent[0] = u[0];
+                        //     cells[left[0]][left[1]].bfs_parent[1] = u[1];
+                        // }
+
 
                     }
                 }
