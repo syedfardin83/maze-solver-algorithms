@@ -475,6 +475,17 @@ public:
             if (bfs_loc[0] == intersection_stack[ISLen - 1][0] && bfs_loc[1] == intersection_stack[ISLen - 1][1])
             {
                 log("Found path to " + std::to_string(bfs_loc[0]) + "," + std::to_string(bfs_loc[1]));
+
+                //  Printing the route
+                log("Route:");
+                int curr[2] = {intersection_stack[ISLen-1][0],intersection_stack[ISLen-1][0]};
+                log(std::to_string(curr[0])+","+std::to_string(curr[1]));
+                while(curr[0]!=curr_cell[0] && curr[1]!=curr_cell[1]){
+                    log(std::to_string(cells[curr[0]][curr[1]].bfs_parent[0])+","+std::to_string(cells[curr[0]][curr[1]].bfs_parent[1]));
+                    curr[0] = cells[curr[0]][curr[1]].bfs_parent[0];
+                    curr[1] = cells[curr[0]][curr[1]].bfs_parent[1];
+                }
+
                 ISLen--;
                 return;
             }
@@ -482,6 +493,8 @@ public:
             if (!cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited)
             {
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
                 bfs_loc[0]--;
                 enq();
                 bfs_loc[0]++;
@@ -489,6 +502,8 @@ public:
             if (!cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[1] = bfs_loc[1];
                 bfs_loc[1]++;
                 enq();
                 bfs_loc[1]--;
@@ -496,6 +511,8 @@ public:
             if (!cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited)
             {
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
                 bfs_loc[0]++;
                 enq();
                 bfs_loc[0]--;
@@ -503,6 +520,8 @@ public:
             if (!cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[1] = bfs_loc[1];
                 bfs_loc[1]--;
                 enq();
                 bfs_loc[1]++;
