@@ -1,5 +1,8 @@
-#include <iostream>
-#include <string>
+// #include <iostream>
+// #include <string>
+
+#include <bits/stdc++.h>
+using namespace std;
 
 #include "API.h"
 
@@ -39,6 +42,12 @@ public:
 
     int intersection_stack[15][2];
     int ISLen = 0;
+
+    int n_explored = 0;
+
+    int bfs_queue[256][2];
+    int q_r = -1, q_f = -1;
+    int bfs_loc[2];
 
     //  Constructor function
     Maze()
@@ -339,7 +348,7 @@ public:
         }
     }
 
-    void DFS_explore()
+    void DFS_explore_old()
     {
         while (true)
         {
@@ -423,11 +432,151 @@ public:
                     int fp = 0;
                     int bp = -1;
 
-                    queue[bp+1][0] = curr_cell[0];
-                    queue[bp+1][1] = curr_cell[1];
+                    queue[bp + 1][0] = curr_cell[0];
+                    queue[bp + 1][1] = curr_cell[1];
                     bp++;
+                }
+            }
+        }
+    }
 
-                    
+    void enq()
+    {
+        if (q_f == -1)
+            q_f = 0;
+        q_r++;
+        bfs_queue[q_r][0] = bfs_loc[0];
+        bfs_queue[q_r][1] = bfs_loc[1];
+    }
+
+    void deq()
+    {
+        bfs_loc[0] = bfs_queue[q_f][0];
+        bfs_loc[1] = bfs_queue[q_f][1];
+        q_f++;
+    }
+
+    //  Run a BFS algorithm to find path to previous intersection point.
+    void to_prev_intersection()
+    {
+        log("PREVVV");
+        bfs_loc[0] = curr_cell[0];
+        bfs_loc[1] = curr_cell[1];
+
+        enq();
+
+        cells[bfs_loc[0]][bfs_loc[1]].bfs_visited = true;
+
+        while (q_r - q_f + 1 > 0)
+        {
+            deq();
+
+            if (bfs_loc[0] == intersection_stack[ISLen - 1][0] && bfs_loc[1] == intersection_stack[ISLen - 1][1])
+            {
+                log("Found path to " + std::to_string(bfs_loc[0]) + "," + std::to_string(bfs_loc[1]));
+                ISLen--;
+                return;
+            }
+
+            if (!cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited)
+            {
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
+                bfs_loc[0]--;
+                enq();
+                bfs_loc[0]++;
+            }
+            if (!cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited)
+            {
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
+                bfs_loc[1]++;
+                enq();
+                bfs_loc[1]--;
+            }
+            if (!cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited)
+            {
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
+                bfs_loc[0]++;
+                enq();
+                bfs_loc[0]--;
+            }
+            if (!cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited)
+            {
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
+                bfs_loc[1]--;
+                enq();
+                bfs_loc[1]++;
+            }
+        }
+        log("not found");
+    }
+
+    void DFS_explore()
+    {
+        API::setColor(curr_cell[0], curr_cell[1], 'G');
+
+        while (n_explored <= 256)
+        {
+            // log_coords();
+            if (!cells[curr_cell[0]][curr_cell[1]].visited)
+            {
+                cells[curr_cell[0]][curr_cell[1]].visited = true;
+                n_explored++;
+                API::setColor(curr_cell[0], curr_cell[1], 'G');
+            }
+            update_adjacent_cells();
+            update_walls_at_cell();
+
+            //  Move ahead if no other route:
+            if (!API::wallFront() && API::wallLeft() && API::wallRight())
+            {
+                move_forward();
+            }
+            else if (API::wallLeft() && API::wallFront() && !API::wallRight())
+            {
+                turn_right();
+                move_forward();
+            }
+            else if (!API::wallLeft() && API::wallFront() && API::wallRight())
+            {
+                turn_left();
+                move_forward();
+            }
+            //  Dead End
+            else if (API::wallFront() && API::wallLeft() && API::wallRight())
+            {
+                // Go back to previous intersection
+                to_prev_intersection();
+            }
+            //  Intersection found
+            else
+            {
+                log("Intersection found at");
+                log_coords();
+                intersection_stack[ISLen][0] = curr_cell[0];
+                intersection_stack[ISLen][1] = curr_cell[1];
+                ISLen++;
+
+                if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
+                {
+                    turn_left();
+                    move_forward();
+                    continue;
+                }
+                else if (!API::wallFront() && !cells[front_cell[0]][front_cell[1]].visited)
+                {
+                    move_forward();
+                    continue;
+                }
+                else if (!API::wallRight() && !cells[right_cell[0]][right_cell[1]].visited)
+                {
+                    turn_right();
+                    move_forward();
+                    continue;
+                }
+                else
+                {
+                    // Go back to previous intersection
+                    to_prev_intersection();
                 }
             }
         }
