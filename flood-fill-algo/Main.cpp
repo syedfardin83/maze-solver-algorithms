@@ -447,7 +447,7 @@ public:
         q_r++;
         bfs_queue[q_r][0] = bfs_loc[0];
         bfs_queue[q_r][1] = bfs_loc[1];
-        log("Added to queue: "+std::to_string(bfs_loc[0])+","+std::to_string(bfs_loc[1]));
+        // log("Added to queue: "+std::to_string(bfs_loc[0])+","+std::to_string(bfs_loc[1]));
     }
 
     void deq()
@@ -460,7 +460,7 @@ public:
     //  Run a BFS algorithm to find path to previous intersection point.
     void to_prev_intersection()
     {
-        log("PREVVV");
+        // log("PREVVV");
         bfs_loc[0] = curr_cell[0];
         bfs_loc[1] = curr_cell[1];
 
@@ -478,15 +478,20 @@ public:
 
                 //  Printing the route
                 log("Route:");
-                int curr[2] = {intersection_stack[ISLen-1][0],intersection_stack[ISLen-1][0]};
+                int curr[2] = {intersection_stack[ISLen-1][0],intersection_stack[ISLen-1][1]};
                 log(std::to_string(curr[0])+","+std::to_string(curr[1]));
                 while(curr[0]!=curr_cell[0] && curr[1]!=curr_cell[1]){
                     log(std::to_string(cells[curr[0]][curr[1]].bfs_parent[0])+","+std::to_string(cells[curr[0]][curr[1]].bfs_parent[1]));
                     curr[0] = cells[curr[0]][curr[1]].bfs_parent[0];
                     curr[1] = cells[curr[0]][curr[1]].bfs_parent[1];
                 }
+                // log("intersection:");
+                // for(int i=0;i<ISLen;i++){
+                //     log(std::to_string(intersection_stack[i][0])+","+std::to_string(intersection_stack[i][1]));
+                // }
 
-                ISLen--;
+                ISLen=ISLen-1;
+                log("ISLen = "+std::to_string(ISLen));
                 return;
             }
 
@@ -565,13 +570,13 @@ public:
             else if (API::wallFront() && API::wallLeft() && API::wallRight())
             {
                 // Go back to previous intersection
-                to_prev_intersection();
+                // to_prev_intersection();
+                turn_left();
+                turn_left();
             }
             //  Intersection found
             else
             {
-                log("Intersection found at");
-                log_coords();
                 intersection_stack[ISLen][0] = curr_cell[0];
                 intersection_stack[ISLen][1] = curr_cell[1];
                 ISLen++;
