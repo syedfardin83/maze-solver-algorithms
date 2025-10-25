@@ -447,6 +447,7 @@ public:
         q_r++;
         bfs_queue[q_r][0] = bfs_loc[0];
         bfs_queue[q_r][1] = bfs_loc[1];
+        log("Added to queue: "+std::to_string(bfs_loc[0])+","+std::to_string(bfs_loc[1]));
     }
 
     void deq()
