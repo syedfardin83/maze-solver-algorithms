@@ -496,6 +496,14 @@ public:
     //  Run a BFS algorithm to find path to previous intersection point.
     void to_prev_intersection()
     {
+        log("Intersection stack:");
+        for (int i = 0; i < ISLen; i++)
+        {
+            log(std::to_string(intersection_stack[i][0]) + "," + std::to_string(intersection_stack[i][1]));
+        }
+        // log("from");
+        // log_coords();
+        // log("returning to prev intersection: "+std::to_string(intersection_stack[ISLen-1][0])+","+std::to_string(intersection_stack[ISLen-1][1]));
         // prepare BFS: clear previous bfs flags/parents and reset queue
         for (int i = 0; i < 16; i++)
             for (int j = 0; j < 16; j++)
@@ -548,7 +556,6 @@ public:
                 int path[256][2];
                 int plen = 0;
 
-
                 // start from target (intersection) and walk parents back to start
                 int tx = intersection_stack[ISLen - 1][0];
                 int ty = intersection_stack[ISLen - 1][1];
@@ -570,7 +577,11 @@ public:
                     tx = px;
                     ty = py;
                     // avoid overflow
-                    if (plen >= 256) { aborted = true; break; }
+                    if (plen >= 256)
+                    {
+                        aborted = true;
+                        break;
+                    }
                 }
 
                 if (aborted)
@@ -579,7 +590,8 @@ public:
                     for (int i = 0; i < 16; i++)
                         for (int j = 0; j < 16; j++)
                             cells[i][j].bfs_visited = false;
-                    q_f = -1; q_r = -1;
+                    q_f = -1;
+                    q_r = -1;
                     return;
                 }
 
@@ -616,17 +628,25 @@ public:
 
                     // determine required absolute direction
                     char need = 'N';
-                    if (dx == sx && dy == sy + 1) need = 'N';
-                    else if (dx == sx + 1 && dy == sy) need = 'E';
-                    else if (dx == sx && dy == sy - 1) need = 'S';
-                    else if (dx == sx - 1 && dy == sy) need = 'W';
+                    if (dx == sx && dy == sy + 1)
+                        need = 'N';
+                    else if (dx == sx + 1 && dy == sy)
+                        need = 'E';
+                    else if (dx == sx && dy == sy - 1)
+                        need = 'S';
+                    else if (dx == sx - 1 && dy == sy)
+                        need = 'W';
 
                     // verify that planned step is not blocked by a wall in the map
                     bool blocked = false;
-                    if (need == 'N' && cells[sx][sy].wallFront) blocked = true;
-                    if (need == 'E' && cells[sx][sy].wallRight) blocked = true;
-                    if (need == 'S' && cells[sx][sy].wallBack) blocked = true;
-                    if (need == 'W' && cells[sx][sy].wallLeft) blocked = true;
+                    if (need == 'N' && cells[sx][sy].wallFront)
+                        blocked = true;
+                    if (need == 'E' && cells[sx][sy].wallRight)
+                        blocked = true;
+                    if (need == 'S' && cells[sx][sy].wallBack)
+                        blocked = true;
+                    if (need == 'W' && cells[sx][sy].wallLeft)
+                        blocked = true;
                     if (blocked)
                     {
                         log("Planned path tries to move through a wall at (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
@@ -634,7 +654,8 @@ public:
                         for (int ii = 0; ii < 16; ii++)
                             for (int jj = 0; jj < 16; jj++)
                                 cells[ii][jj].bfs_visited = false;
-                        q_f = -1; q_r = -1;
+                        q_f = -1;
+                        q_r = -1;
                         return;
                     }
 
@@ -672,8 +693,31 @@ public:
                 q_r = -1;
 
                 // pop this intersection from stack
-                ISLen = ISLen - 1;
-                log("ISLen = " + std::to_string(ISLen));
+                update_adjacent_cells();
+                int n_ways = 0;
+                int n_visited = 0;
+                if (!API::wallFront)
+                {
+                    n_ways++;
+                    if (cells[front_cell[0]][front_cell[1]].visited)
+                        n_visited++;
+                }
+                if (!API::wallLeft)
+                {
+                    n_ways++;
+
+                    if (cells[left_cell[0]][left_cell[1]].visited)
+                        n_visited++;
+                }
+                if (!API::wallRight)
+                {
+                    n_ways++;
+
+                    if (cells[right_cell[0]][right_cell[1]].visited)
+                        n_visited++;
+                }
+                if (n_visited == n_ways)
+                    ISLen--;
                 return;
             }
 
@@ -721,7 +765,6 @@ public:
     {
         API::setColor(curr_cell[0], curr_cell[1], 'G');
 
-        
         while (n_explored <= 256)
         {
             log("reached");
@@ -764,9 +807,12 @@ public:
             //  Intersection found
             else
             {
-                intersection_stack[ISLen][0] = curr_cell[0];
-                intersection_stack[ISLen][1] = curr_cell[1];
-                ISLen++;
+                if (intersection_stack[ISLen - 1][0] != curr_cell[0] && intersection_stack[ISLen - 1][1] != curr_cell[1])
+                {
+                    intersection_stack[ISLen][0] = curr_cell[0];
+                    intersection_stack[ISLen][1] = curr_cell[1];
+                    ISLen++;
+                }
 
                 if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
                 {
