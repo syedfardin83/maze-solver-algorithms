@@ -40,7 +40,7 @@ public:
 
     char orientation = 'N';
 
-    int intersection_stack[15][2];
+    int intersection_stack[100][2];
     int ISLen = 0;
 
     int n_explored = 0;
@@ -502,11 +502,7 @@ public:
     //  Run a BFS algorithm to find path to previous intersection point.
     void to_prev_intersection()
     {
-        log("Intersection stack:");
-        for (int i = 0; i < ISLen; i++)
-        {
-            log(std::to_string(intersection_stack[i][0]) + "," + std::to_string(intersection_stack[i][1]));
-        }
+
         log("curr loc");
         log_coords();
         log("Starting backtrack from " + std::to_string(curr_cell[0]) + "," + std::to_string(curr_cell[1]) + "to " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
@@ -835,6 +831,11 @@ public:
                     intersection_stack[ISLen][1] = curr_cell[1];
                     ISLen++;
                     log("Added intersection: " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
+                    log("Intersection stack:");
+                    for (int i = 0; i < ISLen; i++)
+                    {
+                        log(std::to_string(intersection_stack[i][0]) + "," + std::to_string(intersection_stack[i][1]));
+                    }
                 }
 
                 if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
