@@ -52,7 +52,7 @@ public:
     int n_ways = 0;
     int n_visited = 0;
 
-    int prev_removed[2] = {-1,-1};
+    int prev_removed[2] = {-1, -1};
 
     //  Constructor function
     Maze()
@@ -342,6 +342,7 @@ public:
         }
 
         update_adjacent_cells();
+        API::setColor(curr_cell[0], curr_cell[1], 'G');
     }
 
     void log_coords()
@@ -396,7 +397,7 @@ public:
             // ensure adjacent-cell indices are current
             update_adjacent_cells();
 
-            cells[curr_cell[0]][curr_cell[1]].visited = true;
+            // cells[curr_cell[0]][curr_cell[1]].visited = true;
             API::setColor(curr_cell[0], curr_cell[1], 'G');
 
             //  Keep moving forward till multiple paths are possible:
@@ -620,11 +621,11 @@ public:
                 }
 
                 // Debug: print planned path (start -> target)
-                // log("Planned path (start->target):");
-                // for (int ii = 0; ii < plen; ii++)
-                // {
-                //     log("(" + std::to_string(path[ii][0]) + "," + std::to_string(path[ii][1]) + ")");
-                // }
+                log("Planned path (start->target):");
+                for (int ii = 0; ii < plen; ii++)
+                {
+                    log("(" + std::to_string(path[ii][0]) + "," + std::to_string(path[ii][1]) + ")");
+                }
 
                 // follow path from current -> intersection
                 for (int i = 1; i < plen; i++)
@@ -705,7 +706,7 @@ public:
                 // pop this intersection from stack
                 n_ways = 0;
                 n_visited = 0;
-                log("starting");
+                // log("starting");
                 // log(""+std::to_string(API::wallFront()));
                 if (!API::wallFront())
                 {
@@ -734,14 +735,14 @@ public:
                 {
                     log("Removing intersection: " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
                     log(std::to_string(n_ways));
-                    prev_removed[0] = intersection_stack[ISLen-1][0];
-                    prev_removed[1] = intersection_stack[ISLen-1][1];
+                    prev_removed[0] = intersection_stack[ISLen - 1][0];
+                    prev_removed[1] = intersection_stack[ISLen - 1][1];
                     ISLen--;
                 }
                 return;
             }
 
-            if (bfs_loc[0] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited)
+            if (bfs_loc[0] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited && cells[bfs_loc[0] - 1][bfs_loc[1]].visited)
             {
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
@@ -750,7 +751,7 @@ public:
                 enq();
                 bfs_loc[0]++;
             }
-            if (bfs_loc[1] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited)
+            if (bfs_loc[1] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited && cells[bfs_loc[0]][bfs_loc[1] + 1].visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[0] = bfs_loc[0];
@@ -759,7 +760,7 @@ public:
                 enq();
                 bfs_loc[1]--;
             }
-            if (bfs_loc[0] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited)
+            if (bfs_loc[0] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited && cells[bfs_loc[0] + 1][bfs_loc[1]].visited)
             {
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
@@ -768,7 +769,7 @@ public:
                 enq();
                 bfs_loc[0]--;
             }
-            if (bfs_loc[1] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited)
+            if (bfs_loc[1] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited && cells[bfs_loc[0]][bfs_loc[1] - 1].visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[0] = bfs_loc[0];
@@ -787,14 +788,14 @@ public:
 
         while (n_explored <= 256)
         {
-            log("reached");
-            log_coords();
+            // log("reached");
+            // log_coords();
             // log_coords();
             if (!cells[curr_cell[0]][curr_cell[1]].visited)
             {
                 cells[curr_cell[0]][curr_cell[1]].visited = true;
                 n_explored++;
-                API::setColor(curr_cell[0], curr_cell[1], 'G');
+                // API::setColor(curr_cell[0], curr_cell[1], 'G');
             }
             update_adjacent_cells();
             update_walls_at_cell();
@@ -828,7 +829,7 @@ public:
             else
             {
 
-                if ((!((intersection_stack[ISLen - 1][0] == curr_cell[0]) && (intersection_stack[ISLen - 1][1] == curr_cell[1])))&&(!(curr_cell[0]==prev_removed[0] && curr_cell[1]==prev_removed[1])))
+                if ((!((intersection_stack[ISLen - 1][0] == curr_cell[0]) && (intersection_stack[ISLen - 1][1] == curr_cell[1]))) && (!(curr_cell[0] == prev_removed[0] && curr_cell[1] == prev_removed[1])))
                 {
                     intersection_stack[ISLen][0] = curr_cell[0];
                     intersection_stack[ISLen][1] = curr_cell[1];
