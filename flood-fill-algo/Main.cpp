@@ -72,18 +72,30 @@ public:
             if (API::wallLeft())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
+                // symmetric update: neighbor to the west has right wall
+                if (curr_cell[0] > 0)
+                    cells[curr_cell[0] - 1][curr_cell[1]].wallRight = true;
             }
             if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
+                // symmetric update: neighbor to the east has left wall
+                if (curr_cell[0] < 15)
+                    cells[curr_cell[0] + 1][curr_cell[1]].wallLeft = true;
             }
             if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
+                // symmetric update: neighbor to the north has back wall
+                if (curr_cell[1] < 15)
+                    cells[curr_cell[0]][curr_cell[1] + 1].wallBack = true;
             }
             if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
+                // symmetric update: neighbor to the south has front wall
+                if (curr_cell[1] > 0)
+                    cells[curr_cell[0]][curr_cell[1] - 1].wallFront = true;
             }
         }
         else if (orientation == 'E')
@@ -91,18 +103,26 @@ public:
             if (API::wallLeft())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
+                if (curr_cell[1] < 15)
+                    cells[curr_cell[0]][curr_cell[1] + 1].wallBack = true;
             }
             if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
+                if (curr_cell[1] > 0)
+                    cells[curr_cell[0]][curr_cell[1] - 1].wallFront = true;
             }
             if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
+                if (curr_cell[0] < 15)
+                    cells[curr_cell[0] + 1][curr_cell[1]].wallLeft = true;
             }
             if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
+                if (curr_cell[0] > 0)
+                    cells[curr_cell[0] - 1][curr_cell[1]].wallRight = true;
             }
         }
         else if (orientation == 'S')
@@ -110,18 +130,26 @@ public:
             if (API::wallLeft())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
+                if (curr_cell[0] < 15)
+                    cells[curr_cell[0] + 1][curr_cell[1]].wallLeft = true;
             }
             if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
+                if (curr_cell[0] > 0)
+                    cells[curr_cell[0] - 1][curr_cell[1]].wallRight = true;
             }
             if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
+                if (curr_cell[1] > 0)
+                    cells[curr_cell[0]][curr_cell[1] - 1].wallFront = true;
             }
             if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
+                if (curr_cell[1] < 15)
+                    cells[curr_cell[0]][curr_cell[1] + 1].wallBack = true;
             }
         }
         else if (orientation == 'W')
@@ -129,18 +157,26 @@ public:
             if (API::wallLeft())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
+                if (curr_cell[1] > 0)
+                    cells[curr_cell[0]][curr_cell[1] - 1].wallFront = true;
             }
             if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
+                if (curr_cell[1] < 15)
+                    cells[curr_cell[0]][curr_cell[1] + 1].wallBack = true;
             }
             if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallLeft = true;
+                if (curr_cell[0] > 0)
+                    cells[curr_cell[0] - 1][curr_cell[1]].wallRight = true;
             }
             if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
+                if (curr_cell[0] < 15)
+                    cells[curr_cell[0] + 1][curr_cell[1]].wallLeft = true;
             }
         }
         else
@@ -460,13 +496,45 @@ public:
     //  Run a BFS algorithm to find path to previous intersection point.
     void to_prev_intersection()
     {
-        // log("PREVVV");
+        // prepare BFS: clear previous bfs flags/parents and reset queue
+        for (int i = 0; i < 16; i++)
+            for (int j = 0; j < 16; j++)
+            {
+                cells[i][j].bfs_visited = false;
+                cells[i][j].bfs_parent[0] = -1;
+                cells[i][j].bfs_parent[1] = -1;
+            }
+
+        q_f = -1;
+        q_r = -1;
+
+        // If the top of intersection stack is the current cell, pop it to go to the previous one
+        if (ISLen <= 0)
+        {
+            log("No intersections in stack");
+            return;
+        }
+        if (intersection_stack[ISLen - 1][0] == curr_cell[0] && intersection_stack[ISLen - 1][1] == curr_cell[1])
+        {
+            // pop current intersection since we're already there
+            ISLen = ISLen - 1;
+        }
+        if (ISLen <= 0)
+        {
+            log("No previous intersection to go to");
+            return;
+        }
+
+        // start BFS from current cell
         bfs_loc[0] = curr_cell[0];
         bfs_loc[1] = curr_cell[1];
 
-        enq();
-
+        // mark start
         cells[bfs_loc[0]][bfs_loc[1]].bfs_visited = true;
+        cells[bfs_loc[0]][bfs_loc[1]].bfs_parent[0] = -1;
+        cells[bfs_loc[0]][bfs_loc[1]].bfs_parent[1] = -1;
+
+        enq();
 
         while (q_r - q_f + 1 > 0)
         {
@@ -476,26 +544,139 @@ public:
             {
                 log("Found path to " + std::to_string(bfs_loc[0]) + "," + std::to_string(bfs_loc[1]));
 
-                //  Printing the route
-                log("Route:");
-                int curr[2] = {intersection_stack[ISLen-1][0],intersection_stack[ISLen-1][1]};
-                log(std::to_string(curr[0])+","+std::to_string(curr[1]));
-                while(curr[0]!=curr_cell[0] && curr[1]!=curr_cell[1]){
-                    log(std::to_string(cells[curr[0]][curr[1]].bfs_parent[0])+","+std::to_string(cells[curr[0]][curr[1]].bfs_parent[1]));
-                    curr[0] = cells[curr[0]][curr[1]].bfs_parent[0];
-                    curr[1] = cells[curr[0]][curr[1]].bfs_parent[1];
+                // build path from current cell to the intersection using bfs_parent
+                int path[256][2];
+                int plen = 0;
+
+                // start from target (intersection) and walk parents back to start
+                int tx = intersection_stack[ISLen - 1][0];
+                int ty = intersection_stack[ISLen - 1][1];
+                bool aborted = false;
+                while (!(tx == curr_cell[0] && ty == curr_cell[1]))
+                {
+                    path[plen][0] = tx;
+                    path[plen][1] = ty;
+                    plen++;
+                    int px = cells[tx][ty].bfs_parent[0];
+                    int py = cells[tx][ty].bfs_parent[1];
+                    // safety: if parent not set, abort
+                    if (px == -1 && py == -1)
+                    {
+                        log("bfs parent missing, aborting");
+                        aborted = true;
+                        break;
+                    }
+                    tx = px;
+                    ty = py;
+                    // avoid overflow
+                    if (plen >= 256) { aborted = true; break; }
                 }
-                // log("intersection:");
-                // for(int i=0;i<ISLen;i++){
-                //     log(std::to_string(intersection_stack[i][0])+","+std::to_string(intersection_stack[i][1]));
+
+                if (aborted)
+                {
+                    // cleanup and return without moving
+                    for (int i = 0; i < 16; i++)
+                        for (int j = 0; j < 16; j++)
+                            cells[i][j].bfs_visited = false;
+                    q_f = -1; q_r = -1;
+                    return;
+                }
+
+                // finally add the starting cell
+                path[plen][0] = curr_cell[0];
+                path[plen][1] = curr_cell[1];
+                plen++;
+
+                // path currently: [target, ..., start] -> reverse to [start, ..., target]
+                for (int i = 0; i < plen / 2; i++)
+                {
+                    int tx0 = path[i][0];
+                    int ty0 = path[i][1];
+                    path[i][0] = path[plen - 1 - i][0];
+                    path[i][1] = path[plen - 1 - i][1];
+                    path[plen - 1 - i][0] = tx0;
+                    path[plen - 1 - i][1] = ty0;
+                }
+
+                // Debug: print planned path (start -> target)
+                // log("Planned path (start->target):");
+                // for (int ii = 0; ii < plen; ii++)
+                // {
+                //     log("(" + std::to_string(path[ii][0]) + "," + std::to_string(path[ii][1]) + ")");
                 // }
 
-                ISLen=ISLen-1;
-                log("ISLen = "+std::to_string(ISLen));
+                // follow path from current -> intersection
+                for (int i = 1; i < plen; i++)
+                {
+                    int sx = path[i - 1][0];
+                    int sy = path[i - 1][1];
+                    int dx = path[i][0];
+                    int dy = path[i][1];
+
+                    // determine required absolute direction
+                    char need = 'N';
+                    if (dx == sx && dy == sy + 1) need = 'N';
+                    else if (dx == sx + 1 && dy == sy) need = 'E';
+                    else if (dx == sx && dy == sy - 1) need = 'S';
+                    else if (dx == sx - 1 && dy == sy) need = 'W';
+
+                    // verify that planned step is not blocked by a wall in the map
+                    bool blocked = false;
+                    if (need == 'N' && cells[sx][sy].wallFront) blocked = true;
+                    if (need == 'E' && cells[sx][sy].wallRight) blocked = true;
+                    if (need == 'S' && cells[sx][sy].wallBack) blocked = true;
+                    if (need == 'W' && cells[sx][sy].wallLeft) blocked = true;
+                    if (blocked)
+                    {
+                        log("Planned path tries to move through a wall at (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
+                        // cleanup and abort
+                        for (int ii = 0; ii < 16; ii++)
+                            for (int jj = 0; jj < 16; jj++)
+                                cells[ii][jj].bfs_visited = false;
+                        q_f = -1; q_r = -1;
+                        return;
+                    }
+
+                    // turn to required direction using minimal turns (in your style)
+                    if (orientation == need)
+                    {
+                        // nothing
+                    }
+                    else if ((orientation == 'N' && need == 'S') || (orientation == 'S' && need == 'N') ||
+                             (orientation == 'E' && need == 'W') || (orientation == 'W' && need == 'E'))
+                    {
+                        turn_left();
+                        turn_left();
+                    }
+                    else if ((orientation == 'N' && need == 'W') || (orientation == 'W' && need == 'S') ||
+                             (orientation == 'S' && need == 'E') || (orientation == 'E' && need == 'N'))
+                    {
+                        turn_left();
+                    }
+                    else
+                    {
+                        turn_right();
+                    }
+
+                    // move forward one step
+                    move_forward();
+                }
+
+                // cleanup bfs_visited flags and queue pointers
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        cells[i][j].bfs_visited = false;
+
+                q_f = -1;
+                q_r = -1;
+
+                // pop this intersection from stack
+                ISLen = ISLen - 1;
+                log("ISLen = " + std::to_string(ISLen));
                 return;
             }
 
-            if (!cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited)
+            if (bfs_loc[0] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited)
             {
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
@@ -504,7 +685,7 @@ public:
                 enq();
                 bfs_loc[0]++;
             }
-            if (!cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited)
+            if (bfs_loc[1] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[0] = bfs_loc[0];
@@ -513,7 +694,7 @@ public:
                 enq();
                 bfs_loc[1]--;
             }
-            if (!cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited)
+            if (bfs_loc[0] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited)
             {
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
@@ -522,7 +703,7 @@ public:
                 enq();
                 bfs_loc[0]--;
             }
-            if (!cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited)
+            if (bfs_loc[1] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited)
             {
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[0] = bfs_loc[0];
@@ -539,8 +720,11 @@ public:
     {
         API::setColor(curr_cell[0], curr_cell[1], 'G');
 
+        
         while (n_explored <= 256)
         {
+            log("reached");
+            log_coords();
             // log_coords();
             if (!cells[curr_cell[0]][curr_cell[1]].visited)
             {
@@ -558,6 +742,8 @@ public:
             }
             else if (API::wallLeft() && API::wallFront() && !API::wallRight())
             {
+                // log("Turning right, moving forward.");
+                // log_coords();
                 turn_right();
                 move_forward();
             }
