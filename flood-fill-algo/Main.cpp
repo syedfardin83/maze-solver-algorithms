@@ -544,9 +544,10 @@ public:
             {
                 log("Found path to " + std::to_string(bfs_loc[0]) + "," + std::to_string(bfs_loc[1]));
 
-                // build path from current cell to the intersection using bfs_parent
+                // build path from current cell to intersection using bfs_parent
                 int path[256][2];
                 int plen = 0;
+
 
                 // start from target (intersection) and walk parents back to start
                 int tx = intersection_stack[ISLen - 1][0];
