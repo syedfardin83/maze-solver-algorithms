@@ -49,6 +49,11 @@ public:
     int q_r = -1, q_f = -1;
     int bfs_loc[2];
 
+    int n_ways = 0;
+    int n_visited = 0;
+
+    int prev_removed[2] = {-1,-1};
+
     //  Constructor function
     Maze()
     {
@@ -501,6 +506,9 @@ public:
         {
             log(std::to_string(intersection_stack[i][0]) + "," + std::to_string(intersection_stack[i][1]));
         }
+        log("curr loc");
+        log_coords();
+        log("Starting backtrack from " + std::to_string(curr_cell[0]) + "," + std::to_string(curr_cell[1]) + "to " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
         // log("from");
         // log_coords();
         // log("returning to prev intersection: "+std::to_string(intersection_stack[ISLen-1][0])+","+std::to_string(intersection_stack[ISLen-1][1]));
@@ -683,6 +691,8 @@ public:
                     // move forward one step
                     move_forward();
                 }
+                log("Reached to prev intersection: ");
+                log_coords();
 
                 // cleanup bfs_visited flags and queue pointers
                 for (int i = 0; i < 16; i++)
@@ -693,31 +703,41 @@ public:
                 q_r = -1;
 
                 // pop this intersection from stack
-                update_adjacent_cells();
-                int n_ways = 0;
-                int n_visited = 0;
-                if (!API::wallFront)
+                n_ways = 0;
+                n_visited = 0;
+                log("starting");
+                // log(""+std::to_string(API::wallFront()));
+                if (!API::wallFront())
                 {
                     n_ways++;
+                    // log("here");
                     if (cells[front_cell[0]][front_cell[1]].visited)
                         n_visited++;
                 }
-                if (!API::wallLeft)
+                if (!API::wallLeft())
                 {
                     n_ways++;
+                    // log("here");
 
                     if (cells[left_cell[0]][left_cell[1]].visited)
                         n_visited++;
                 }
-                if (!API::wallRight)
+                if (!API::wallRight())
                 {
                     n_ways++;
+                    // log("here");
 
                     if (cells[right_cell[0]][right_cell[1]].visited)
                         n_visited++;
                 }
                 if (n_visited == n_ways)
+                {
+                    log("Removing intersection: " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
+                    log(std::to_string(n_ways));
+                    prev_removed[0] = intersection_stack[ISLen-1][0];
+                    prev_removed[1] = intersection_stack[ISLen-1][1];
                     ISLen--;
+                }
                 return;
             }
 
@@ -800,18 +820,20 @@ public:
             else if (API::wallFront() && API::wallLeft() && API::wallRight())
             {
                 // Go back to previous intersection
-                // to_prev_intersection();
-                turn_left();
-                turn_left();
+                to_prev_intersection();
+                // turn_left();
+                // turn_left();
             }
             //  Intersection found
             else
             {
-                if (intersection_stack[ISLen - 1][0] != curr_cell[0] && intersection_stack[ISLen - 1][1] != curr_cell[1])
+
+                if ((!((intersection_stack[ISLen - 1][0] == curr_cell[0]) && (intersection_stack[ISLen - 1][1] == curr_cell[1])))&&(!(curr_cell[0]==prev_removed[0] && curr_cell[1]==prev_removed[1])))
                 {
                     intersection_stack[ISLen][0] = curr_cell[0];
                     intersection_stack[ISLen][1] = curr_cell[1];
                     ISLen++;
+                    log("Added intersection: " + std::to_string(intersection_stack[ISLen - 1][0]) + "," + std::to_string(intersection_stack[ISLen - 1][1]));
                 }
 
                 if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
