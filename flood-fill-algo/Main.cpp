@@ -524,7 +524,8 @@ public:
         // If the top of intersection stack is the current cell, pop it to go to the previous one
         if (ISLen <= 0)
         {
-            log("No intersections in stack");
+            // log("No intersections in stack");
+            log("Exploration complete!");
             return;
         }
         if (intersection_stack[ISLen - 1][0] == curr_cell[0] && intersection_stack[ISLen - 1][1] == curr_cell[1])
