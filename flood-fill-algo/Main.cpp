@@ -67,6 +67,10 @@ public:
             API::setText(0, i, std::to_string(i));
             API::setText(i, 0, std::to_string(i));
         }
+
+        intersection_stack[ISLen][0] = curr_cell[0];
+        intersection_stack[ISLen][1] = curr_cell[1];
+        ISLen++;
     }
 
     void update_walls_at_cell()
