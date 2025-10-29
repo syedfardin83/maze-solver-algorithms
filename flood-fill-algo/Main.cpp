@@ -35,8 +35,6 @@ public:
     int left_cell[2];
     int right_cell[2];
     int back_cell[2];
-    char route[200];
-    int p = 0;
 
     char orientation = 'N';
 
@@ -261,8 +259,6 @@ public:
     void turn_left()
     {
         API::turnLeft();
-        route[p] = 'L';
-        p++;
         // Change orientation first, then update adjacent cells
         if (orientation == 'N')
         {
@@ -291,8 +287,6 @@ public:
     void turn_right()
     {
         API::turnRight();
-        route[p] = 'R';
-        p++;
         // Change orientation first, then update adjacent cells
         if (orientation == 'N')
         {
@@ -321,8 +315,6 @@ public:
     void move_forward()
     {
         API::moveForward();
-        route[p] = 'F';
-        p++;
         // Change virtual position first, then update adjacent cells
         if (orientation == 'N')
         {
@@ -357,133 +349,6 @@ public:
     void log_orientation()
     {
         log("Orientation: " + std::string(1, orientation));
-    }
-
-    void left_hand_explore()
-    {
-        log("Started left hand exploration algorithm...");
-        API::setColor(0, 0, 'G');
-        API::setText(0, 0, "abc");
-        while (true)
-        {
-            // ensure adjacent-cell indices are current
-            update_adjacent_cells();
-
-            cells[curr_cell[0]][curr_cell[1]].visited = true;
-            API::setColor(curr_cell[0], curr_cell[1], 'G');
-            // Updating walls
-            update_walls_at_cell();
-
-            if (!API::wallLeft())
-            {
-                //  Turn left
-                turn_left();
-                log_orientation();
-            }
-            while (API::wallFront())
-            {
-                // Turn right
-                turn_right();
-                log_orientation();
-            }
-
-            // Move forward
-            move_forward();
-
-            log_coords();
-        }
-    }
-
-    void DFS_explore_old()
-    {
-        while (true)
-        {
-            // ensure adjacent-cell indices are current
-            update_adjacent_cells();
-
-            // cells[curr_cell[0]][curr_cell[1]].visited = true;
-            API::setColor(curr_cell[0], curr_cell[1], 'G');
-
-            //  Keep moving forward till multiple paths are possible:
-            if (!API::wallFront() && API::wallLeft() && API::wallRight())
-            {
-                move_forward();
-            }
-            else if (API::wallLeft() && API::wallFront() && !API::wallRight())
-            {
-                turn_right();
-                move_forward();
-            }
-            else if (!API::wallLeft() && API::wallFront() && API::wallRight())
-            {
-                turn_left();
-                move_forward();
-            }
-            //  Executes only when an intersection found
-            else
-            {
-                if (!(API::wallFront() && API::wallLeft() && API::wallRight()))
-                {
-                    log("Intersection found at");
-                    log_coords();
-                    intersection_stack[ISLen][0] = curr_cell[0];
-                    intersection_stack[ISLen][1] = curr_cell[1];
-                    ISLen++;
-                }
-                //  If multiple paths found, take first one.
-                if (!API::wallFront() && !cells[front_cell[0]][front_cell[1]].visited)
-                {
-                    // if (!cells[right_cell[0]][right_cell[1]].visited)
-                    // {
-                    //     turn_right();
-                    //     // DFS_explore();
-                    // }
-                    // log("Front is:");
-                    // log("(" + std::to_string(front_cell[0]) + ", " + std::to_string(front_cell[1]) + ")");
-
-                    move_forward();
-                }
-                else if (!API::wallLeft() && !cells[left_cell[0]][left_cell[1]].visited)
-                {
-                    if (true)
-                    {
-                        turn_left();
-                        // log("here");
-                        // move_forward();
-                        // DFS_explore();
-                    }
-                }
-                else if (!API::wallRight() && !cells[right_cell[0]][right_cell[1]].visited)
-                {
-                    if (true)
-                    {
-                        turn_right();
-                        // DFS_explore();
-                    }
-                }
-
-                // Dead end case:
-                else if (API::wallFront() && API::wallLeft() && API::wallRight())
-                {
-                    turn_left();
-                    turn_left();
-                }
-                // If all paths visited, go back to previous intersection.
-                else
-                {
-                    // Compute shortest route back to previous intersection using BFS:
-                    log("Starting BFS");
-
-                    int queue[5][2];
-                    int fp = 0;
-                    int bp = -1;
-
-                    queue[bp + 1][0] = curr_cell[0];
-                    queue[bp + 1][1] = curr_cell[1];
-                    bp++;
-                }
-            }
-        }
     }
 
     void enq()
