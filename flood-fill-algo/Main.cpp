@@ -811,6 +811,142 @@ public:
             }
 
         }
+
+        //  Create the shortest path
+        log("Starting pathfinding from " + std::to_string(curr_cell[0]) + "," + std::to_string(curr_cell[1]) + " to " + std::to_string(dest[0]) + "," + std::to_string(dest[1]));
+        
+        // Build path by following lowest cost neighbors
+        int path[256][2];
+        int plen = 0;
+        
+        // Start from current position
+        int tx = curr_cell[0];
+        int ty = curr_cell[1];
+        
+        // Add current cell to path
+        path[plen][0] = tx;
+        path[plen][1] = ty;
+        plen++;
+        
+        // Follow path of decreasing costs until we reach destination
+        while (!(tx == dest[0] && ty == dest[1])) {
+            int min_cost = 999;
+            int next_x = tx;
+            int next_y = ty;
+            bool found_next = false;
+            
+            // Check all four neighbors for the one with minimum cost
+            // Left neighbor
+            if (tx > 0 && !cells[tx][ty].wallLeft && cells[tx-1][ty].visited && cells[tx-1][ty].cost < min_cost) {
+                min_cost = cells[tx-1][ty].cost;
+                next_x = tx - 1;
+                next_y = ty;
+                found_next = true;
+            }
+            // Front neighbor (North)
+            if (ty < 15 && !cells[tx][ty].wallFront && cells[tx][ty+1].visited && cells[tx][ty+1].cost < min_cost) {
+                min_cost = cells[tx][ty+1].cost;
+                next_x = tx;
+                next_y = ty + 1;
+                found_next = true;
+            }
+            // Right neighbor
+            if (tx < 15 && !cells[tx][ty].wallRight && cells[tx+1][ty].visited && cells[tx+1][ty].cost < min_cost) {
+                min_cost = cells[tx+1][ty].cost;
+                next_x = tx + 1;
+                next_y = ty;
+                found_next = true;
+            }
+            // Back neighbor (South)
+            if (ty > 0 && !cells[tx][ty].wallBack && cells[tx][ty-1].visited && cells[tx][ty-1].cost < min_cost) {
+                min_cost = cells[tx][ty-1].cost;
+                next_x = tx;
+                next_y = ty - 1;
+                found_next = true;
+            }
+            
+            if (!found_next) {
+                log("No path found to destination!");
+                return;
+            }
+            
+            // Move to next cell
+            tx = next_x;
+            ty = next_y;
+            path[plen][0] = tx;
+            path[plen][1] = ty;
+            plen++;
+            
+            // Safety check
+            if (plen >= 256) {
+                log("Path too long, aborting");
+                return;
+            }
+        }
+        
+        // Debug: print planned path
+        log("Planned shortest path:");
+        for (int ii = 0; ii < plen; ii++) {
+            log("(" + std::to_string(path[ii][0]) + "," + std::to_string(path[ii][1]) + ")");
+        }
+        
+        // Execute the path using same logic as to_prev_intersection
+        for (int i = 1; i < plen; i++) {
+            int sx = path[i - 1][0];
+            int sy = path[i - 1][1];
+            int dx = path[i][0];
+            int dy = path[i][1];
+
+            // determine required absolute direction
+            char need = 'N';
+            if (dx == sx && dy == sy + 1)
+                need = 'N';
+            else if (dx == sx + 1 && dy == sy)
+                need = 'E';
+            else if (dx == sx && dy == sy - 1)
+                need = 'S';
+            else if (dx == sx - 1 && dy == sy)
+                need = 'W';
+
+            // verify that planned step is not blocked by a wall in the map
+            bool blocked = false;
+            if (need == 'N' && cells[sx][sy].wallFront)
+                blocked = true;
+            if (need == 'E' && cells[sx][sy].wallRight)
+                blocked = true;
+            if (need == 'S' && cells[sx][sy].wallBack)
+                blocked = true;
+            if (need == 'W' && cells[sx][sy].wallLeft)
+                blocked = true;
+            if (blocked) {
+                log("Planned path tries to move through a wall at (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
+                return;
+            }
+
+            // turn to required direction using minimal turns
+            if (orientation == need) {
+                // nothing
+            }
+            else if ((orientation == 'N' && need == 'S') || (orientation == 'S' && need == 'N') ||
+                     (orientation == 'E' && need == 'W') || (orientation == 'W' && need == 'E')) {
+                turn_left();
+                turn_left();
+            }
+            else if ((orientation == 'N' && need == 'W') || (orientation == 'W' && need == 'S') ||
+                     (orientation == 'S' && need == 'E') || (orientation == 'E' && need == 'N')) {
+                turn_left();
+            }
+            else {
+                turn_right();
+            }
+
+            // move forward one step
+            move_forward();
+        }
+        
+        log("Reached destination!");
+        log_coords();
+        
     }
 
     void display_costs(){
