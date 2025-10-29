@@ -52,6 +52,11 @@ public:
 
     int prev_removed[2] = {-1, -1};
 
+    bool exploration_done = false;
+
+    int dest[2] = {7, 7};
+    int flood_fill_dist = 0;
+
     //  Constructor function
     Maze()
     {
@@ -394,7 +399,8 @@ public:
         if (ISLen <= 0)
         {
             // log("No intersections in stack");
-            log("Exploration complete!");
+            // log("Exploration complete!");
+            exploration_done = true;
             return;
         }
         if (intersection_stack[ISLen - 1][0] == curr_cell[0] && intersection_stack[ISLen - 1][1] == curr_cell[1])
@@ -652,7 +658,7 @@ public:
     {
         API::setColor(curr_cell[0], curr_cell[1], 'G');
 
-        while (n_explored <= 256)
+        while (!exploration_done)
         {
             // log("reached");
             // log_coords();
@@ -660,7 +666,6 @@ public:
             if (!cells[curr_cell[0]][curr_cell[1]].visited)
             {
                 cells[curr_cell[0]][curr_cell[1]].visited = true;
-                n_explored++;
                 // API::setColor(curr_cell[0], curr_cell[1], 'G');
             }
             update_adjacent_cells();
@@ -733,6 +738,89 @@ public:
             }
         }
     }
+
+    void flood_fill()
+    {
+        // cost assignment
+
+        // prepare BFS: clear previous bfs flags/parents and reset queue
+        for (int i = 0; i < 16; i++)
+            for (int j = 0; j < 16; j++)
+            {
+                cells[i][j].bfs_visited = false;
+            }
+
+        q_f = -1;
+        q_r = -1;
+
+        bfs_loc[0] = dest[0];
+        bfs_loc[1] = dest[1];
+
+        cells[bfs_loc[0]][bfs_loc[1]].bfs_visited = true;
+        cells[bfs_loc[0]][bfs_loc[1]].cost = 0;
+
+        enq();
+
+        while (q_r - q_f + 1 > 0)
+        {
+            deq();
+
+            if (bfs_loc[0] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallLeft && !cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited && cells[bfs_loc[0] - 1][bfs_loc[1]].visited)
+            {
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
+                cells[bfs_loc[0] - 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                bfs_loc[0]--;
+
+                enq();
+                bfs_loc[0]++;
+            }
+            if (bfs_loc[1] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallFront && !cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited && cells[bfs_loc[0]][bfs_loc[1] + 1].visited)
+            {
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[1] = bfs_loc[1];
+                cells[bfs_loc[0]][bfs_loc[1] + 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                bfs_loc[1]++;
+
+                enq();
+                bfs_loc[1]--;
+            }
+            if (bfs_loc[0] < 15 && !cells[bfs_loc[0]][bfs_loc[1]].wallRight && !cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited && cells[bfs_loc[0] + 1][bfs_loc[1]].visited)
+            {
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
+                cells[bfs_loc[0] + 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                bfs_loc[0]++;
+
+                enq();
+                bfs_loc[0]--;
+            }
+            if (bfs_loc[1] > 0 && !cells[bfs_loc[0]][bfs_loc[1]].wallBack && !cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited && cells[bfs_loc[0]][bfs_loc[1] - 1].visited)
+            {
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[0] = bfs_loc[0];
+                cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[1] = bfs_loc[1];
+                cells[bfs_loc[0]][bfs_loc[1] - 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                bfs_loc[1]--;
+
+                enq();
+                bfs_loc[1]++;
+            }
+
+        }
+    }
+
+    void display_costs(){
+        log("displaying costs");
+        for(int i=0;i<16;i++){
+            for(int j=0;j<16;j++){
+                API::setText(i,j,std::to_string(cells[i][j].cost));
+            }
+        }
+    }
 };
 
 int main(int argc, char *argv[])
@@ -740,4 +828,8 @@ int main(int argc, char *argv[])
     Maze maze;
     // maze.left_hand_explore();
     maze.DFS_explore();
+    log("Exploration is done, moving ahead with flood fill.");
+    maze.flood_fill();
+    maze.display_costs();
+    log("Cost assignment done");
 }
