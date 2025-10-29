@@ -343,7 +343,7 @@ public:
         }
 
         update_adjacent_cells();
-        API::setColor(curr_cell[0], curr_cell[1], 'G');
+        // API::setColor(curr_cell[0], curr_cell[1], 'G');
     }
 
     void log_coords()
@@ -656,7 +656,7 @@ public:
 
     void DFS_explore()
     {
-        API::setColor(curr_cell[0], curr_cell[1], 'G');
+        // API::setColor(curr_cell[0], curr_cell[1], 'G');
 
         while (!exploration_done)
         {
@@ -741,6 +741,8 @@ public:
 
     void flood_fill()
     {
+        API::setColor(curr_cell[0], curr_cell[1], 'G');
+
         // cost assignment
 
         // prepare BFS: clear previous bfs flags/parents and reset queue
@@ -770,7 +772,7 @@ public:
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
                 cells[bfs_loc[0] - 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
-                cells[bfs_loc[0] - 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                cells[bfs_loc[0] - 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost + 1;
                 bfs_loc[0]--;
 
                 enq();
@@ -781,7 +783,7 @@ public:
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[0] = bfs_loc[0];
                 cells[bfs_loc[0]][bfs_loc[1] + 1].bfs_parent[1] = bfs_loc[1];
-                cells[bfs_loc[0]][bfs_loc[1] + 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                cells[bfs_loc[0]][bfs_loc[1] + 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost + 1;
                 bfs_loc[1]++;
 
                 enq();
@@ -792,7 +794,7 @@ public:
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_visited = true;
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[0] = bfs_loc[0];
                 cells[bfs_loc[0] + 1][bfs_loc[1]].bfs_parent[1] = bfs_loc[1];
-                cells[bfs_loc[0] + 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                cells[bfs_loc[0] + 1][bfs_loc[1]].cost = cells[bfs_loc[0]][bfs_loc[1]].cost + 1;
                 bfs_loc[0]++;
 
                 enq();
@@ -803,95 +805,103 @@ public:
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_visited = true;
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[0] = bfs_loc[0];
                 cells[bfs_loc[0]][bfs_loc[1] - 1].bfs_parent[1] = bfs_loc[1];
-                cells[bfs_loc[0]][bfs_loc[1] - 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost+1;
+                cells[bfs_loc[0]][bfs_loc[1] - 1].cost = cells[bfs_loc[0]][bfs_loc[1]].cost + 1;
                 bfs_loc[1]--;
 
                 enq();
                 bfs_loc[1]++;
             }
-
         }
 
         //  Create the shortest path
         log("Starting pathfinding from " + std::to_string(curr_cell[0]) + "," + std::to_string(curr_cell[1]) + " to " + std::to_string(dest[0]) + "," + std::to_string(dest[1]));
-        
+
         // Build path by following lowest cost neighbors
         int path[256][2];
         int plen = 0;
-        
+
         // Start from current position
         int tx = curr_cell[0];
         int ty = curr_cell[1];
-        
+
         // Add current cell to path
         path[plen][0] = tx;
         path[plen][1] = ty;
         plen++;
-        
+
         // Follow path of decreasing costs until we reach destination
-        while (!(tx == dest[0] && ty == dest[1])) {
+        while (!(tx == dest[0] && ty == dest[1]))
+        {
             int min_cost = 999;
             int next_x = tx;
             int next_y = ty;
             bool found_next = false;
-            
+
             // Check all four neighbors for the one with minimum cost
             // Left neighbor
-            if (tx > 0 && !cells[tx][ty].wallLeft && cells[tx-1][ty].visited && cells[tx-1][ty].cost < min_cost) {
-                min_cost = cells[tx-1][ty].cost;
+            if (tx > 0 && !cells[tx][ty].wallLeft && cells[tx - 1][ty].visited && cells[tx - 1][ty].cost < min_cost)
+            {
+                min_cost = cells[tx - 1][ty].cost;
                 next_x = tx - 1;
                 next_y = ty;
                 found_next = true;
             }
             // Front neighbor (North)
-            if (ty < 15 && !cells[tx][ty].wallFront && cells[tx][ty+1].visited && cells[tx][ty+1].cost < min_cost) {
-                min_cost = cells[tx][ty+1].cost;
+            if (ty < 15 && !cells[tx][ty].wallFront && cells[tx][ty + 1].visited && cells[tx][ty + 1].cost < min_cost)
+            {
+                min_cost = cells[tx][ty + 1].cost;
                 next_x = tx;
                 next_y = ty + 1;
                 found_next = true;
             }
             // Right neighbor
-            if (tx < 15 && !cells[tx][ty].wallRight && cells[tx+1][ty].visited && cells[tx+1][ty].cost < min_cost) {
-                min_cost = cells[tx+1][ty].cost;
+            if (tx < 15 && !cells[tx][ty].wallRight && cells[tx + 1][ty].visited && cells[tx + 1][ty].cost < min_cost)
+            {
+                min_cost = cells[tx + 1][ty].cost;
                 next_x = tx + 1;
                 next_y = ty;
                 found_next = true;
             }
             // Back neighbor (South)
-            if (ty > 0 && !cells[tx][ty].wallBack && cells[tx][ty-1].visited && cells[tx][ty-1].cost < min_cost) {
-                min_cost = cells[tx][ty-1].cost;
+            if (ty > 0 && !cells[tx][ty].wallBack && cells[tx][ty - 1].visited && cells[tx][ty - 1].cost < min_cost)
+            {
+                min_cost = cells[tx][ty - 1].cost;
                 next_x = tx;
                 next_y = ty - 1;
                 found_next = true;
             }
-            
-            if (!found_next) {
+
+            if (!found_next)
+            {
                 log("No path found to destination!");
                 return;
             }
-            
+
             // Move to next cell
             tx = next_x;
             ty = next_y;
             path[plen][0] = tx;
             path[plen][1] = ty;
             plen++;
-            
+
             // Safety check
-            if (plen >= 256) {
+            if (plen >= 256)
+            {
                 log("Path too long, aborting");
                 return;
             }
         }
-        
+
         // Debug: print planned path
         log("Planned shortest path:");
-        for (int ii = 0; ii < plen; ii++) {
+        for (int ii = 0; ii < plen; ii++)
+        {
             log("(" + std::to_string(path[ii][0]) + "," + std::to_string(path[ii][1]) + ")");
         }
-        
+
         // Execute the path using same logic as to_prev_intersection
-        for (int i = 1; i < plen; i++) {
+        for (int i = 1; i < plen; i++)
+        {
             int sx = path[i - 1][0];
             int sy = path[i - 1][1];
             int dx = path[i][0];
@@ -918,42 +928,50 @@ public:
                 blocked = true;
             if (need == 'W' && cells[sx][sy].wallLeft)
                 blocked = true;
-            if (blocked) {
+            if (blocked)
+            {
                 log("Planned path tries to move through a wall at (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
                 return;
             }
 
             // turn to required direction using minimal turns
-            if (orientation == need) {
+            if (orientation == need)
+            {
                 // nothing
             }
             else if ((orientation == 'N' && need == 'S') || (orientation == 'S' && need == 'N') ||
-                     (orientation == 'E' && need == 'W') || (orientation == 'W' && need == 'E')) {
+                     (orientation == 'E' && need == 'W') || (orientation == 'W' && need == 'E'))
+            {
                 turn_left();
                 turn_left();
             }
             else if ((orientation == 'N' && need == 'W') || (orientation == 'W' && need == 'S') ||
-                     (orientation == 'S' && need == 'E') || (orientation == 'E' && need == 'N')) {
+                     (orientation == 'S' && need == 'E') || (orientation == 'E' && need == 'N'))
+            {
                 turn_left();
             }
-            else {
+            else
+            {
                 turn_right();
             }
 
             // move forward one step
             move_forward();
+            API::setColor(curr_cell[0], curr_cell[1], 'G');
         }
-        
+
         log("Reached destination!");
         log_coords();
-        
     }
 
-    void display_costs(){
+    void display_costs()
+    {
         log("displaying costs");
-        for(int i=0;i<16;i++){
-            for(int j=0;j<16;j++){
-                API::setText(i,j,std::to_string(cells[i][j].cost));
+        for (int i = 0; i < 16; i++)
+        {
+            for (int j = 0; j < 16; j++)
+            {
+                API::setText(i, j, std::to_string(cells[i][j].cost));
             }
         }
     }
@@ -966,6 +984,5 @@ int main(int argc, char *argv[])
     maze.DFS_explore();
     log("Exploration is done, moving ahead with flood fill.");
     maze.flood_fill();
-    maze.display_costs();
-    log("Cost assignment done");
+    // maze.display_costs();
 }
