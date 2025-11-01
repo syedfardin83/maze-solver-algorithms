@@ -943,7 +943,7 @@ void flood_fill(struct Maze *maze)
 
         // move forward one step
         move_forward(maze);
-        API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
+        API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'R');
     }
 
     // log("Reached destination!");
