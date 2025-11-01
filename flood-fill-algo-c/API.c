@@ -51,6 +51,10 @@ int API_wallLeft() {
     return getBoolean("wallLeft");
 }
 
+int API_wallBack() {
+    return getBoolean("wallBack");
+}
+
 int API_moveForward() {
     return getAck("moveForward");
 }

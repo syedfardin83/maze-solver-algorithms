@@ -17,19 +17,6 @@ struct Cell
     int cost;
 };
 
-void Cell(struct Cell *cell)
-{
-    cell->wallLeft = false;
-    cell->wallRight = false;
-    cell->wallFront = false;
-    cell->wallBack = false;
-    cell->visited = false;
-
-    cell->bfs_visited = false;
-
-    cell->cost = 0;
-}
-
 struct Maze
 {
     struct Cell cells[16][16];
@@ -59,6 +46,39 @@ struct Maze
     int dest[2];
 };
 
+// Function prototypes
+struct Maze; // Forward declaration
+void Cell(struct Cell *cell);
+void Maze(struct Maze *maze);
+void update_walls_at_cell(struct Maze *maze);
+void update_adjacent_cells(struct Maze *maze);
+void turn_left(struct Maze *maze);
+void turn_right(struct Maze *maze);
+void move_forward(struct Maze *maze);
+void log_coords(struct Maze *maze);
+void log_orientation(struct Maze *maze);
+void enq(struct Maze *maze);
+void deq(struct Maze *maze);
+void to_prev_intersection(struct Maze *maze);
+void DFS_explore(struct Maze *maze);
+
+
+
+void Cell(struct Cell *cell)
+{
+    cell->wallLeft = false;
+    cell->wallRight = false;
+    cell->wallFront = false;
+    cell->wallBack = false;
+    cell->visited = false;
+
+    cell->bfs_visited = false;
+
+    cell->cost = 0;
+}
+
+
+
 void Maze(struct Maze *maze)
 {
     maze->curr_cell[0] = 0;
@@ -66,8 +86,8 @@ void Maze(struct Maze *maze)
 
     maze->ISLen = 0;
 
-    maze->q_r = 0;
-    maze->q_f = 0;
+    maze->q_r = -1;  // Should start at -1, not 0
+    maze->q_f = -1;  // Should start at -1, not 0
 
     maze->n_ways = 0;
     maze->n_visited = 0;
@@ -78,7 +98,13 @@ void Maze(struct Maze *maze)
     maze->exploration_done = false;
 
     maze->dest[0] = 7;
-    maze->dest[0] = 7;
+    maze->dest[1] = 7;
+
+    maze->orientation = 'N';  // Missing initialization!
+
+    // Mark starting cell as visited and initialize adjacent cells
+    maze->cells[maze->curr_cell[0]][maze->curr_cell[1]].visited = true;
+    update_adjacent_cells(maze);
 
     maze->intersection_stack[maze->ISLen][0] = maze->curr_cell[0];
     maze->intersection_stack[maze->ISLen][1] = maze->curr_cell[1];
@@ -606,19 +632,25 @@ void to_prev_intersection(struct Maze *maze)
             if (!API_wallFront())
             {
                 maze->n_ways++;
-                if (maze->cells[maze->front_cell[0]][maze->front_cell[1]].visited)
+                if (maze->front_cell[0] >= 0 && maze->front_cell[0] < 16 && 
+                    maze->front_cell[1] >= 0 && maze->front_cell[1] < 16 && 
+                    maze->cells[maze->front_cell[0]][maze->front_cell[1]].visited)
                     maze->n_visited++;
             }
             if (!API_wallLeft())
             {
                 maze->n_ways++;
-                if (maze->cells[maze->left_cell[0]][maze->left_cell[1]].visited)
+                if (maze->left_cell[0] >= 0 && maze->left_cell[0] < 16 && 
+                    maze->left_cell[1] >= 0 && maze->left_cell[1] < 16 && 
+                    maze->cells[maze->left_cell[0]][maze->left_cell[1]].visited)
                     maze->n_visited++;
             }
             if (!API_wallRight())
             {
                 maze->n_ways++;
-                if (maze->cells[maze->right_cell[0]][maze->right_cell[1]].visited)
+                if (maze->right_cell[0] >= 0 && maze->right_cell[0] < 16 && 
+                    maze->right_cell[1] >= 0 && maze->right_cell[1] < 16 && 
+                    maze->cells[maze->right_cell[0]][maze->right_cell[1]].visited)
                     maze->n_visited++;
             }
             if (maze->n_visited == maze->n_ways)
@@ -722,7 +754,8 @@ void DFS_explore(struct Maze *maze)
         //  Intersection found
         else
         {
-            if ((!(maze->intersection_stack[maze->ISLen - 1][0] == maze->curr_cell[0] && 
+            if (maze->ISLen > 0 && // Add bounds check
+                (!(maze->intersection_stack[maze->ISLen - 1][0] == maze->curr_cell[0] && 
                    maze->intersection_stack[maze->ISLen - 1][1] == maze->curr_cell[1])) && 
                 (!(maze->curr_cell[0] == maze->prev_removed[0] && maze->curr_cell[1] == maze->prev_removed[1])))
             {
@@ -742,18 +775,24 @@ void DFS_explore(struct Maze *maze)
                 // }
             }
 
-            if (!API_wallLeft() && !maze->cells[maze->left_cell[0]][maze->left_cell[1]].visited)
+            if (!API_wallLeft() && maze->left_cell[0] >= 0 && maze->left_cell[0] < 16 && 
+                maze->left_cell[1] >= 0 && maze->left_cell[1] < 16 && 
+                !maze->cells[maze->left_cell[0]][maze->left_cell[1]].visited)
             {
                 turn_left(maze);
                 move_forward(maze);
                 continue;
             }
-            else if (!API_wallFront() && !maze->cells[maze->front_cell[0]][maze->front_cell[1]].visited)
+            else if (!API_wallFront() && maze->front_cell[0] >= 0 && maze->front_cell[0] < 16 && 
+                     maze->front_cell[1] >= 0 && maze->front_cell[1] < 16 && 
+                     !maze->cells[maze->front_cell[0]][maze->front_cell[1]].visited)
             {
                 move_forward(maze);
                 continue;
             }
-            else if (!API_wallRight() && !maze->cells[maze->right_cell[0]][maze->right_cell[1]].visited)
+            else if (!API_wallRight() && maze->right_cell[0] >= 0 && maze->right_cell[0] < 16 && 
+                     maze->right_cell[1] >= 0 && maze->right_cell[1] < 16 && 
+                     !maze->cells[maze->right_cell[0]][maze->right_cell[1]].visited)
             {
                 turn_right(maze);
                 move_forward(maze);

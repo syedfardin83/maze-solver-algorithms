@@ -6,6 +6,7 @@ int API_mazeHeight();
 int API_wallFront();
 int API_wallRight();
 int API_wallLeft();
+int API_wallBack();
 
 int API_moveForward();  // Returns 0 if crash, else returns 1
 void API_turnRight();
