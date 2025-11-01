@@ -41,8 +41,6 @@ public:
     int intersection_stack[100][2];
     int ISLen = 0;
 
-    int n_explored = 0;
-
     int bfs_queue[256][2];
     int q_r = -1, q_f = -1;
     int bfs_loc[2];
@@ -55,7 +53,6 @@ public:
     bool exploration_done = false;
 
     int dest[2] = {7, 7};
-    int flood_fill_dist = 0;
 
     //  Constructor function
     Maze()
