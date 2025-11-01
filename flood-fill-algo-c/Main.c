@@ -61,6 +61,8 @@ void enq(struct Maze *maze);
 void deq(struct Maze *maze);
 void to_prev_intersection(struct Maze *maze);
 void DFS_explore(struct Maze *maze);
+void flood_fill(struct Maze *maze);
+void display_costs(struct Maze *maze);
 
 
 
@@ -76,8 +78,6 @@ void Cell(struct Cell *cell)
 
     cell->cost = 0;
 }
-
-
 
 void Maze(struct Maze *maze)
 {
@@ -716,16 +716,264 @@ void to_prev_intersection(struct Maze *maze)
     //log("not found");
 }
 
-void DFS_explore(struct Maze *maze)
+void flood_fill(struct Maze *maze)
 {
     // API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
+
+    // cost assignment
+
+    // prepare BFS: clear previous bfs flags/parents and reset queue
+    for (int i = 0; i < 16; i++)
+        for (int j = 0; j < 16; j++)
+        {
+            maze->cells[i][j].bfs_visited = false;
+        }
+
+    maze->q_f = -1;
+    maze->q_r = -1;
+
+    maze->bfs_loc[0] = maze->dest[0];
+    maze->bfs_loc[1] = maze->dest[1];
+
+    maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].bfs_visited = true;
+    maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].cost = 0;
+
+    enq(maze);
+
+    while (maze->q_r - maze->q_f + 1 > 0)
+    {
+        deq(maze);
+
+        if (maze->bfs_loc[0] > 0 && !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].wallLeft && 
+            !maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].bfs_visited && 
+            maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].visited)
+        {
+            maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].bfs_visited = true;
+            maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].bfs_parent[0] = maze->bfs_loc[0];
+            maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].bfs_parent[1] = maze->bfs_loc[1];
+            maze->cells[maze->bfs_loc[0] - 1][maze->bfs_loc[1]].cost = maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].cost + 1;
+            maze->bfs_loc[0]--;
+
+            enq(maze);
+            maze->bfs_loc[0]++;
+        }
+        if (maze->bfs_loc[1] < 15 && !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].wallFront && 
+            !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].bfs_visited && 
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].visited)
+        {
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].bfs_visited = true;
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].bfs_parent[0] = maze->bfs_loc[0];
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].bfs_parent[1] = maze->bfs_loc[1];
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] + 1].cost = maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].cost + 1;
+            maze->bfs_loc[1]++;
+
+            enq(maze);
+            maze->bfs_loc[1]--;
+        }
+        if (maze->bfs_loc[0] < 15 && !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].wallRight && 
+            !maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].bfs_visited && 
+            maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].visited)
+        {
+            maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].bfs_visited = true;
+            maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].bfs_parent[0] = maze->bfs_loc[0];
+            maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].bfs_parent[1] = maze->bfs_loc[1];
+            maze->cells[maze->bfs_loc[0] + 1][maze->bfs_loc[1]].cost = maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].cost + 1;
+            maze->bfs_loc[0]++;
+
+            enq(maze);
+            maze->bfs_loc[0]--;
+        }
+        if (maze->bfs_loc[1] > 0 && !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].wallBack && 
+            !maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].bfs_visited && 
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].visited)
+        {
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].bfs_visited = true;
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].bfs_parent[0] = maze->bfs_loc[0];
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].bfs_parent[1] = maze->bfs_loc[1];
+            maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1] - 1].cost = maze->cells[maze->bfs_loc[0]][maze->bfs_loc[1]].cost + 1;
+            maze->bfs_loc[1]--;
+
+            enq(maze);
+            maze->bfs_loc[1]++;
+        }
+    }
+
+    //  Create the shortest path
+    // log("Starting pathfinding from " + std::to_string(curr_cell[0]) + "," + std::to_string(curr_cell[1]) + " to " + std::to_string(dest[0]) + "," + std::to_string(dest[1]));
+
+    // Build path by following lowest cost neighbors
+    int path[256][2];
+    int plen = 0;
+
+    // Start from current position
+    int tx = maze->curr_cell[0];
+    int ty = maze->curr_cell[1];
+
+    // Add current cell to path
+    path[plen][0] = tx;
+    path[plen][1] = ty;
+    plen++;
+
+    // Follow path of decreasing costs until we reach destination
+    while (!(tx == maze->dest[0] && ty == maze->dest[1]))
+    {
+        int min_cost = 999;
+        int next_x = tx;
+        int next_y = ty;
+        bool found_next = false;
+
+        // Check all four neighbors for the one with minimum cost
+        // Left neighbor
+        if (tx > 0 && !maze->cells[tx][ty].wallLeft && maze->cells[tx - 1][ty].visited && maze->cells[tx - 1][ty].cost < min_cost)
+        {
+            min_cost = maze->cells[tx - 1][ty].cost;
+            next_x = tx - 1;
+            next_y = ty;
+            found_next = true;
+        }
+        // Front neighbor (North)
+        if (ty < 15 && !maze->cells[tx][ty].wallFront && maze->cells[tx][ty + 1].visited && maze->cells[tx][ty + 1].cost < min_cost)
+        {
+            min_cost = maze->cells[tx][ty + 1].cost;
+            next_x = tx;
+            next_y = ty + 1;
+            found_next = true;
+        }
+        // Right neighbor
+        if (tx < 15 && !maze->cells[tx][ty].wallRight && maze->cells[tx + 1][ty].visited && maze->cells[tx + 1][ty].cost < min_cost)
+        {
+            min_cost = maze->cells[tx + 1][ty].cost;
+            next_x = tx + 1;
+            next_y = ty;
+            found_next = true;
+        }
+        // Back neighbor (South)
+        if (ty > 0 && !maze->cells[tx][ty].wallBack && maze->cells[tx][ty - 1].visited && maze->cells[tx][ty - 1].cost < min_cost)
+        {
+            min_cost = maze->cells[tx][ty - 1].cost;
+            next_x = tx;
+            next_y = ty - 1;
+            found_next = true;
+        }
+
+        if (!found_next)
+        {
+            // log("No path found to destination!");
+            return;
+        }
+
+        // Move to next cell
+        tx = next_x;
+        ty = next_y;
+        path[plen][0] = tx;
+        path[plen][1] = ty;
+        plen++;
+
+        // Safety check
+        if (plen >= 256)
+        {
+            // log("Path too long, aborting");
+            return;
+        }
+    }
+
+    // Debug: print planned path
+    // log("Planned shortest path:");
+    // for (int ii = 0; ii < plen; ii++)
+    // {
+    //     sprintf(buffer, "(%d,%d)", path[ii][0], path[ii][1]);
+    //     log(buffer);
+    // }
+
+    // Execute the path using same logic as to_prev_intersection
+    for (int i = 1; i < plen; i++)
+    {
+        int sx = path[i - 1][0];
+        int sy = path[i - 1][1];
+        int dx = path[i][0];
+        int dy = path[i][1];
+
+        // determine required absolute direction
+        char need = 'N';
+        if (dx == sx && dy == sy + 1)
+            need = 'N';
+        else if (dx == sx + 1 && dy == sy)
+            need = 'E';
+        else if (dx == sx && dy == sy - 1)
+            need = 'S';
+        else if (dx == sx - 1 && dy == sy)
+            need = 'W';
+
+        // verify that planned step is not blocked by a wall in the map
+        bool blocked = false;
+        if (need == 'N' && maze->cells[sx][sy].wallFront)
+            blocked = true;
+        if (need == 'E' && maze->cells[sx][sy].wallRight)
+            blocked = true;
+        if (need == 'S' && maze->cells[sx][sy].wallBack)
+            blocked = true;
+        if (need == 'W' && maze->cells[sx][sy].wallLeft)
+            blocked = true;
+        if (blocked)
+        {
+            // log("Planned path tries to move through a wall at (" + std::to_string(sx) + "," + std::to_string(sy) + ")");
+            return;
+        }
+
+        // turn to required direction using minimal turns
+        if (maze->orientation == need)
+        {
+            // nothing
+        }
+        else if ((maze->orientation == 'N' && need == 'S') || (maze->orientation == 'S' && need == 'N') ||
+                 (maze->orientation == 'E' && need == 'W') || (maze->orientation == 'W' && need == 'E'))
+        {
+            turn_left(maze);
+            turn_left(maze);
+        }
+        else if ((maze->orientation == 'N' && need == 'W') || (maze->orientation == 'W' && need == 'S') ||
+                 (maze->orientation == 'S' && need == 'E') || (maze->orientation == 'E' && need == 'N'))
+        {
+            turn_left(maze);
+        }
+        else
+        {
+            turn_right(maze);
+        }
+
+        // move forward one step
+        move_forward(maze);
+        API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
+    }
+
+    // log("Reached destination!");
+    // log_coords(maze);
+}
+
+void display_costs(struct Maze *maze)
+{
+    // log("displaying costs");
+    for (int i = 0; i < 16; i++)
+    {
+        for (int j = 0; j < 16; j++)
+        {
+            char cost_str[10];
+            // sprintf(cost_str, "%d", maze->cells[i][j].cost);
+            API_setText(i, j, cost_str);
+        }
+    }
+}
+
+void DFS_explore(struct Maze *maze)
+{
+    API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
 
     while (!maze->exploration_done)
     {
         if (!maze->cells[maze->curr_cell[0]][maze->curr_cell[1]].visited)
         {
             maze->cells[maze->curr_cell[0]][maze->curr_cell[1]].visited = true;
-            // API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
+            API_setColor(maze->curr_cell[0], maze->curr_cell[1], 'G');
         }
         update_adjacent_cells(maze);
         update_walls_at_cell(maze);
@@ -818,4 +1066,9 @@ int main(int argc, char *argv[])
     struct Maze maze;
     Maze(&maze);
     DFS_explore(&maze);
+    // log("Exploration is done, moving ahead with flood fill.");
+    flood_fill(&maze);
+    // display_costs(&maze);
+    
+    return 0;
 }
