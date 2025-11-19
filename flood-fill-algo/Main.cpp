@@ -88,21 +88,18 @@ public:
             if (API::wallRight())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallRight = true;
-                // symmetric update: neighbor to the east has left wall
                 if (curr_cell[0] < 15)
                     cells[curr_cell[0] + 1][curr_cell[1]].wallLeft = true;
             }
             if (API::wallFront())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallFront = true;
-                // symmetric update: neighbor to the north has back wall
                 if (curr_cell[1] < 15)
                     cells[curr_cell[0]][curr_cell[1] + 1].wallBack = true;
             }
             if (API::wallBack())
             {
                 cells[curr_cell[0]][curr_cell[1]].wallBack = true;
-                // symmetric update: neighbor to the south has front wall
                 if (curr_cell[1] > 0)
                     cells[curr_cell[0]][curr_cell[1] - 1].wallFront = true;
             }

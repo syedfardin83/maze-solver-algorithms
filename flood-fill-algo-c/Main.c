@@ -422,16 +422,7 @@ void deq(struct Maze *maze)
 //  Run a BFS algorithm to find path to previous intersection point.
 void to_prev_intersection(struct Maze *maze)
 {
-    //log("curr loc");
-    // log_coords(maze);
-    char buffer[200];
-    // sprintf(buffer, "Starting backtrack from %d,%d to %d,%d", 
-    //         maze->curr_cell[0], maze->curr_cell[1], 
-    //         maze->intersection_stack[maze->ISLen - 1][0], 
-    //         maze->intersection_stack[maze->ISLen - 1][1]);
-    // log(buffer);
-    
-    // prepare BFS: clear previous bfs flags/parents and reset queue
+
     for (int i = 0; i < 16; i++)
         for (int j = 0; j < 16; j++)
         {
@@ -1068,7 +1059,7 @@ int main(int argc, char *argv[])
     DFS_explore(&maze);
     // log("Exploration is done, moving ahead with flood fill.");
     flood_fill(&maze);
-    // display_costs(&maze);
+    display_costs(&maze);
     
     return 0;
 }
