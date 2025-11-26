@@ -52,7 +52,7 @@ public:
 
     bool exploration_done = false;
 
-    int dest[2] = {7, 7};
+    int dest[2] = {8,8};
 
     //  Constructor function
     Maze()
@@ -337,7 +337,7 @@ public:
         }
 
         update_adjacent_cells();
-        // API::setColor(curr_cell[0], curr_cell[1], 'G');
+        API::setColor(curr_cell[0], curr_cell[1], 'G');
     }
 
     void log_coords()
