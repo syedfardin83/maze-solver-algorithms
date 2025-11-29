@@ -38,6 +38,13 @@ bool API::wallLeft() {
     return response == "true";
 }
 
+bool API::wallBack() {
+    std::cout << "wallBack" << std::endl;
+    std::string response;
+    std::cin >> response;
+    return response == "true";
+}
+
 void API::moveForward(int distance) {
     std::cout << "moveForward ";
     // Don't print distance argument unless explicitly specified, for
